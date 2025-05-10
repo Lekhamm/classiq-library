@@ -1,76 +1,118 @@
-qfunc phase_lad(value: int, phi_b: qbit[]) {
-  repeat (index: phi_b.len) {
-    PHASE(qft_const_adder_phase(index, value, phi_b.len), phi_b[index]);
+qfunc qft_no_swap_expanded___0(qbv: qbit[5]) {
+  repeat (i: 5) {
+    H(qbv[i]);
+    repeat (j: 4 - i) {
+      CPHASE(3.1416 * (2.0 ** ((-j) - 1.0)), qbv[(i + j) + 1], qbv[i]);
+    }
   }
 }
 
-qfunc my_qft_step(qbv: qbit[]) {
+qfunc qft_expanded___0(target: qbit[5]) {
+  repeat (index: 2.5) {
+    SWAP(target[index], target[4 - index]);
+  }
+  qft_no_swap_expanded___0(target);
+}
+
+qfunc phase_lad_expanded___0(phi_b: qbit[5]) {
+  PHASE(1.7671, phi_b[0]);
+  PHASE(3.5343, phi_b[1]);
+  PHASE(0.7854, phi_b[2]);
+  PHASE(1.5708, phi_b[3]);
+  PHASE(3.1416, phi_b[4]);
+}
+
+qfunc phase_lad_expanded___1(phi_b: qbit[5]) {
+  PHASE(2.9452, phi_b[0]);
+  PHASE(5.8905, phi_b[1]);
+  PHASE(5.4978, phi_b[2]);
+  PHASE(4.7124, phi_b[3]);
+  PHASE(3.1416, phi_b[4]);
+}
+
+qfunc my_qft_step_expanded___0(qbv: qbit[]) {
   H(qbv[0]);
-  repeat (index: qbv.len - 1) {
-    CPHASE(pi / (2 ** (index + 1)), qbv[0], qbv[index + 1]);
+  repeat (index: (-1) + qbv.len) {
+    CPHASE(3.1416 * (2.0 ** ((-index) - 1.0)), qbv[0], qbv[index + 1]);
   }
 }
 
-qfunc qft_ns(qbv: qbit[]) {
-  repeat (index: qbv.len) {
-    my_qft_step(qbv[index:qbv.len]);
+qfunc qft_ns_expanded___0(qbv: qbit[5]) {
+  repeat (index: 5) {
+    my_qft_step_expanded___0(qbv[index:5]);
   }
 }
 
-qfunc ctrl_x(ref: int, ctrl: qnum, aux: qbit) {
-  control (ctrl == ref) {
+qfunc ctrl_x_expanded___0(ctrl: qnum<1, False, 0>, aux: qbit) {
+  control (ctrl == 1) {
     X(aux);
   }
 }
 
-qfunc check_msb(ref: int, x: qbit[], aux: qbit) {
+qfunc check_msb_expanded___0(x: qbit[5], aux: qbit) {
   within {
     invert {
-      qft_ns(x);
+      qft_ns_expanded___0(x);
     }
   } apply {
-    ctrl_x(ref, x[0], aux);
+    ctrl_x_expanded___0(x[0], aux);
   }
 }
 
-qfunc ccmod_add(N: int, a: int, phi_b: qbit[], c1: qbit, c2: qbit) {
-  ctrl: qbit[];
+qfunc ctrl_x_expanded___1(ctrl: qnum<1, False, 0>, aux: qbit) {
+  control (ctrl == 0) {
+    X(aux);
+  }
+}
+
+qfunc check_msb_expanded___1(x: qbit[5], aux: qbit) {
+  within {
+    invert {
+      qft_ns_expanded___0(x);
+    }
+  } apply {
+    ctrl_x_expanded___1(x[0], aux);
+  }
+}
+
+qfunc ccmod_add_expanded___0(phi_b: qbit[5], c1: qbit, c2: qbit) {
+  ctrl: qbit[2];
   aux: qbit;
   within {
     allocate(1, aux);
     {c1, c2} -> ctrl;
   } apply {
     control (ctrl) {
-      phase_lad(a, phi_b);
+      phase_lad_expanded___0(phi_b);
     }
     invert {
-      phase_lad(N, phi_b);
+      phase_lad_expanded___1(phi_b);
     }
-    check_msb(1, phi_b, aux);
+    check_msb_expanded___0(phi_b, aux);
     control (aux) {
-      phase_lad(N, phi_b);
+      phase_lad_expanded___1(phi_b);
     }
     within {
       invert {
         control (ctrl) {
-          phase_lad(a, phi_b);
+          phase_lad_expanded___0(phi_b);
         }
       }
     } apply {
-      check_msb(0, phi_b, aux);
+      check_msb_expanded___1(phi_b, aux);
     }
   }
 }
 
-qfunc main(output b: qnum, output ctrl: qbit[2]) {
+qfunc main(output b: qnum<5, False, 0>, output ctrl: qbit[2]) {
   allocate(5, b);
   allocate(2, ctrl);
   b ^= 8;
   X(ctrl[0]);
   X(ctrl[1]);
   within {
-    qft(b);
+    qft_expanded___0(b);
   } apply {
-    ccmod_add(15, 9, b, ctrl[0], ctrl[1]);
+    ccmod_add_expanded___0(b, ctrl[0], ctrl[1]);
   }
 }

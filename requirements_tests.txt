@@ -10,9 +10,10 @@ cvxpy
 pyqsp==0.1.6
 jsonpickle
 tensorboard
+qiskit<2
 qiskit-algorithms
 qiskit-machine-learning
 scikit-learn
-# Pin osqp version due to https://github.com/osqp/osqp/issues/728
-# (indirect dependency via cvxpy)
-osqp==1.0.1
+
+openfermion
+openfermionpyscf
